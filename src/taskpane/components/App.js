@@ -1,8 +1,14 @@
-import * as React               from "react"
-import {Button, ButtonType}     from "office-ui-fabric-react"
-import Header                   from "./Header"
-import HeroList, {HeroListItem} from "./HeroList"
-import Progress                 from "./Progress"
+import * as React                 from "react"
+import { ButtonType }             from "office-ui-fabric-react"
+import { PrimaryButton }          from "office-ui-fabric-react"
+import Header                     from "./Header"
+import HeroList, { HeroListItem } from "./HeroList"
+import Progress                   from "./Progress"
+import { fluoMatrix }             from "@palett/fluo-matrix"
+import { POINTWISE }              from '@vect/enum-matrix-directions'
+import { FRESH, PLANET }          from '@palett/presets'
+import { mapper }                 from '@vect/matrix'
+import { deco }                   from '@spare/deco'
 /* global Button, console, Excel, Header, HeroList, HeroListItem, Progress */
 
 export default class App extends React.Component {
@@ -35,19 +41,24 @@ export default class App extends React.Component {
   click = async () => {
     try {
       await Excel.run(async context => {
-        /**
-         * Insert your Excel code here
-         */
         const range = context.workbook.getSelectedRange()
-
-        // Read the range address
-        range.load("address")
-
-        // Update the fill color
-        range.format.fill.color = "yellow"
-
+        range.load(["address", "values", "rowCount", "columnCount"]) // Read the range properties
         await context.sync()
         console.log(`The range address was ${range.address}.`)
+        let values = range.values
+        let colors = fluoMatrix(values, { direct: POINTWISE, presets: [PLANET, FRESH] })
+        console.log(JSON.stringify(colors, null, 2))
+        let height = range.rowCount, width = range.columnCount
+        console.log(`H ${height}, W ${width}`)
+        // Update the fill color
+        // range.format.fill.color = "yellow"
+        for (let i = 0; i < height; i++) {
+          for (let j = 0; j < width; j++) {
+            // range.getCell(i, j).format.fill.color = colors[i][j]
+          }
+        }
+        // range.values = mapper(values, x => x + 1)
+        range.format.fill.color = "#909090"
       })
     } catch (error) {
       console.error(error)
@@ -55,7 +66,7 @@ export default class App extends React.Component {
   }
 
   render() {
-    const {title, isOfficeInitialized} = this.props
+    const { title, isOfficeInitialized } = this.props
 
     if (!isOfficeInitialized) {
       return (
@@ -71,14 +82,14 @@ export default class App extends React.Component {
           <p className="ms-font-l">
             Modify the source files, then click <b>Run</b>.
           </p>
-          <Button
+          <PrimaryButton
             className="ms-welcome__action"
             buttonType={ButtonType.hero}
-            iconProps={{iconName: "ChevronRight"}}
+            iconProps={{ iconName: "ChevronRight" }}
             onClick={this.click}
           >
             Run
-          </Button>
+          </PrimaryButton>
         </HeroList>
       </div>
     )
